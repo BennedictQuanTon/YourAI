@@ -1,0 +1,17 @@
+{
+  "short_name": "YourAI",
+  "name": "YourAI Enterprise Assistant v4.0",
+  "icons": [
+    {
+      "src": "logo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#FAF9F6",
+  "theme_color": "#111111",
+  "display": "standalone",
+  "orientation": "portrait"
+}

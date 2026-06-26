@@ -1,0 +1,23 @@
+# Python temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+ENV/
+env/
+yourai.db
+
+# Environment variables
+.env
+
+# Node local modules
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# System files
+.DS_Store
+Thumbs.db
