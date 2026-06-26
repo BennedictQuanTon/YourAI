@@ -1,73 +1,103 @@
-# YourAI v4.0 (Enterprise Edition) - Monorepo AI Assistant
+# YourAI v4.0 — Enterprise AI Productivity Platform
 
-[![Enterprise Setup](https://img.shields.io/badge/Architecture-Enterprise--grade-D4AF37?style=for-the-badge)](https://github.com/yourdomain/yourai)
-[![Zero-Cost Corporate Stack](https://img.shields.io/badge/Stack-Zero--Cost-blue?style=for-the-badge)](https://github.com/yourdomain/yourai)
-[![PWA Standalone Ready](https://img.shields.io/badge/PWA-Standalone-success?style=for-the-badge)](https://github.com/yourdomain/yourai)
+[![Architecture](https://img.shields.io/badge/Architecture-Enterprise--Grade-D4AF37?style=for-the-badge)](https://github.com/BennedictQuanTon/YourAI)
+[![Stack](https://img.shields.io/badge/Stack-Zero--Cost-blue?style=for-the-badge)](https://github.com/BennedictQuanTon/YourAI)
+[![PWA](https://img.shields.io/badge/PWA-Standalone-success?style=for-the-badge)](https://github.com/BennedictQuanTon/YourAI)
+[![License](https://img.shields.io/badge/License-MIT-lightgrey?style=for-the-badge)](./LICENSE)
 
-**YourAI v4.0** là giải pháp điều hành công việc, quản trị dự án thông minh tích hợp AI Agent và Lõi tính toán điểm GPA song hệ (Việt Nam - Úc) chuẩn chỉnh sản phẩm dành cho doanh nghiệp lớn (Production-ready). 
+**YourAI v4.0** is a production-ready, enterprise-grade AI assistant and smart project management platform built as a monorepo. It integrates an AI-powered executive agent (Google Gemini), intelligent task scheduling, team project delegation with automated email workflows, and a specialized Dual-Scale GPA Engine that computes academic results simultaneously on both the Vietnamese (10-point) and Australian (7-point) grading scales.
 
-Dự án được triển khai dưới dạng **Monorepo** với thiết kế giao diện theo chuẩn **PWA (Progressive Web App)** sang trọng bậc nhất (**Luxury Design System**), mang lại trải nghiệm mượt mà từ MacBook màn hình lớn xuống màn hình di động iPhone (Add to Homescreen) không qua trung gian.
+The frontend is delivered as a **Progressive Web App (PWA)** using a bespoke **Luxury Design System** — usable from a full MacBook screen down to an iPhone homescreen without any app store dependency.
 
 ---
 
-## 📖 Sơ Đồ Kiến Trúc Hệ Thống (System Topology & UML)
+## Table of Contents
 
-### 1. Kiến Trúc Phân Tán (System Architecture Topology)
+- [Core Features](#core-features)
+- [System Architecture](#system-architecture)
+- [Data Model (ERD)](#data-model-erd)
+- [AI Agent Data Flow](#ai-agent-data-flow)
+- [Authentication & Security Flow](#authentication--security-flow)
+- [Workflow Diagrams](#workflow-diagrams)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+- [Environment Variables](#environment-variables)
+- [Design System](#design-system)
+- [Security & Data Isolation](#security--data-isolation)
+- [Screenshots](#screenshots)
+
+---
+
+## Core Features
+
+| Feature | Description |
+|---|---|
+| **AI Executive Agent** | Type natural language commands in Vietnamese or English; Gemini AI interprets intent and executes actions (create tasks, send emails, manage projects) via function calling. |
+| **Smart Task Scheduler** | Full-featured calendar (month/week/day) with drag-and-drop rescheduling, color-coded task types, location tracking, and AI-powered reminder emails. |
+| **Project Management** | Create projects, manage team members, track statuses, and visualize progress on an interactive 30-day Gantt chart. |
+| **Automated Email Workflows** | Bulk-dispatch project notifications and deadline reminders to team members via Resend SMTP, orchestrated through an ARQ background worker with exponential-backoff retry. |
+| **Dual-Scale GPA Engine** | Hierarchical academic tracker (Year → Term → Subject → Component) that calculates weighted GPAs on both the Vietnamese 10-point and Australian 7-point grading scales simultaneously. |
+| **PWA & Offline Support** | Service Worker provides offline caching and a native-app homescreen experience on iOS and macOS with VAPID Web Push notifications. |
+| **Luxury Dashboard** | Live Ho Chi Minh City clock, SVG donut/line charts for task and workload analytics, academic GPA rings, and project health quadrants. |
+| **Secure Authentication** | JWT HttpOnly cookies, bcrypt password hashing, 4-digit OTP reset with 60-second expiry, 3-day re-reset throttle, and full per-user data isolation. |
+
+---
+
+## System Architecture
+
 ```mermaid
 graph TD
-    %% Tầng Client (PWA)
-    subgraph Client_Layer ["Tầng Client & Giao Diện PWA"]
-        Mac["MacBook 14 Web Browser (Montserrat & Playfair)"]
-        iOS["iPhone PWA - Add to Homescreen (Service Worker)"]
+    subgraph Client_Layer ["Client Layer — PWA"]
+        Mac["MacBook Web Browser"]
+        iOS["iPhone — Add to Homescreen (Service Worker)"]
     end
-    
-    %% Tầng API & Auth
-    subgraph API_Layer ["API Gateway & Bảo Mật"]
+
+    subgraph API_Layer ["API Gateway & Security"]
         Cloudflare["Cloudflare WAF / DNS (Proxy & SSL)"]
-        Gateway["FastAPI REST/WebSocket Router"]
-        RateLimit[("Upstash Redis Rate Limit (Token Bucket)")]
+        Gateway["FastAPI REST / WebSocket Router"]
+        RateLimit[("Upstash Redis — Token Bucket Rate Limiter")]
     end
-    
-    %% Tầng Core Services
-    subgraph Core_Services ["Lõi Nghiệp Vụ - Asyncpg"]
+
+    subgraph Core_Services ["Core Business Services"]
         TaskService["Smart Task & Scheduler Service"]
-        GPAService["Dual-Scale GPA Engine (VN-AU)"]
+        GPAService["Dual-Scale GPA Engine (VN / AU)"]
         ProjectService["Project Hub & Delegation Service"]
     end
-    
-    %% Tầng AI & Message Queue
-    subgraph Async_Workers ["Xử Lý Bất Đồng Bộ & AI"]
+
+    subgraph Async_Workers ["Async Processing & AI"]
         Worker["ARQ Background Worker (Redis)"]
         AIAgent["Gemini AI Executive Agent"]
     end
-    
-    %% Tầng Data & Cloud
-    subgraph Data_Layer ["Lưu Trữ & External APIs"]
-        Supabase[("Supabase PostgreSQL (Row Level Security - RLS)")]
+
+    subgraph Data_Layer ["Data & External APIs"]
+        Supabase[("Supabase PostgreSQL — Row Level Security")]
         Resend["Resend SMTP API (Jinja2 Templates)"]
         WebPush["VAPID Web Push Notification Service"]
     end
-    
-    %% Luồng kết nối
+
     Mac -->|HTTPS| Cloudflare
     iOS -->|HTTPS| Cloudflare
-    Cloudflare -->|Lọc Traffic| Gateway
-    Gateway <-->|Check Limit| RateLimit
+    Cloudflare -->|Filter Traffic| Gateway
+    Gateway <-->|Rate Check| RateLimit
     Gateway --> TaskService
     Gateway --> GPAService
     Gateway --> ProjectService
     TaskService <-->|asyncpg Pool| Supabase
     GPAService <-->|asyncpg Pool| Supabase
     ProjectService <-->|asyncpg Pool| Supabase
-    TaskService -->|Push Delayed Job| Worker
-    ProjectService -->|Push Bulk Mail| Worker
-    Worker -->|Fire API| Resend
-    Worker -->|Send Push| WebPush
-    Gateway -->|Function Calling Prompt| AIAgent
+    TaskService -->|Enqueue Delayed Job| Worker
+    ProjectService -->|Enqueue Bulk Mail| Worker
+    Worker -->|HTTP| Resend
+    Worker -->|VAPID| WebPush
+    Gateway -->|Function-Calling Prompt| AIAgent
     AIAgent -->|JSON Schema Response| Gateway
 ```
 
-### 2. Sơ Đồ Thực Thể Quan Hệ (Entity Relationship Diagram - ERD)
+---
+
+## Data Model (ERD)
+
 ```mermaid
 erDiagram
     USERS ||--o{ USER_SETTINGS : configures
@@ -85,11 +115,11 @@ erDiagram
         uuid id PK "Supabase Auth ID"
         string email UK
         string full_name
-        string avatar "TEXT Base64 Profile Picture"
-        string bio "VARCHAR(500) Biography"
-        string reset_code "4-digit temporary OTP"
-        timestamp reset_code_expires_at "OTP expiration (60s)"
-        timestamp last_password_reset_at "Last successful reset date (3-day throttle)"
+        string avatar "Base64 profile picture"
+        string bio "VARCHAR(500)"
+        string reset_code "4-digit OTP"
+        timestamp reset_code_expires_at "60-second expiry"
+        timestamp last_password_reset_at "3-day throttle"
         timestamp created_at
     }
     USER_SETTINGS {
@@ -97,7 +127,7 @@ erDiagram
         string primary_color_hex "Default: #D4AF37"
         int border_radius_pt "Default: 12"
         string app_border_style "Default: solid"
-        string gpa_scale "Default: VN (VN/AU)"
+        string gpa_scale "VN or AU"
     }
     PROJECTS {
         uuid id PK
@@ -112,7 +142,7 @@ erDiagram
         uuid project_id FK
         string email
         string full_name
-        string role "Custom user-typed role (e.g., PM, Developer, etc.)"
+        string role "e.g. PM, Developer, Designer"
         string status "pending / active / vacation"
     }
     TASKS {
@@ -121,268 +151,435 @@ erDiagram
         uuid user_id FK
         string title
         string status "todo / done"
-        int energy_cost "Scale 1-10"
+        int energy_cost "Scale 1–10"
         timestamp deadline_at
-        string assigned_to "Assignee name/email"
-        string project_link "Resource web url"
-        timestamp assigned_date "Assigned date"
-        string reminder_email "SMTP Alert target email"
-        timestamp reminder_at "AI reminder scheduled datetime"
-        string location "Physical/virtual location"
-        boolean is_online "Whether virtual meeting/zoom"
-        string type "chore / lịch học / dự án"
-        string additional_info "Detailed notes/context"
+        string assigned_to
+        string project_link
+        timestamp reminder_at
+        string reminder_email
+        string location
+        boolean is_online
+        string type "chore / academic / project"
+        string additional_info
     }
     GPA_YEARS {
         uuid id PK
         uuid user_id FK
-        string year_name "e.g., Năm 1, Năm 2"
+        string year_name "e.g. Year 1"
     }
     GPA_TERMS {
         uuid id PK
         uuid year_id FK
-        string term_name "e.g., Học kỳ 1, Học kỳ 2"
+        string term_name "e.g. Semester 1"
+        date start_date
+        date end_date
     }
     GPA_SUBJECTS {
         uuid id PK
         uuid term_id FK
         string subject_name
         int credits
-        numeric final_score_vn "10-scale score"
-        numeric final_score_au "7-scale score"
+        numeric final_score_vn "10-point scale"
+        numeric final_score_au "7-point scale"
     }
     GPA_COMPONENTS {
         uuid id PK
         uuid subject_id FK
         uuid task_id FK "Nullable"
-        string component_name "e.g., Assignment 1, Exam"
-        numeric weight "Percentage e.g., 30.00"
-        numeric score_achieved "10-scale component score"
+        string component_name "e.g. Assignment 1, Final Exam"
+        numeric weight "Percentage, e.g. 30.00"
+        numeric score_achieved "10-point scale"
     }
 ```
 
-### 3. Luồng Dữ Liệu Gọi Hàm AI (Data Flow - DFD Level 1)
+---
+
+## AI Agent Data Flow
+
 ```mermaid
 graph LR
-    User((Người Dùng)) -- "1. Prompt (VD: Tạo task BKI)" --> Auth[FastAPI Auth Guard]
-    Auth -- "2. Check Session & Rate Limit" --> Gateway[FastAPI Router]
-    Gateway -- "3. Prompt + Tool JSON Schemas" --> Gemini[Google Gemini API]
-    Gemini -- "4. Trả về: call_function(create_task, args)" --> Gateway
-    Gateway -- "5. Dịch JSON thành SQL Query" --> DB[(Supabase PostgreSQL)]
-    DB -- "6. Confirm Insert" --> Gateway
-    Gateway -- "7. Tính toán hẹn giờ (Delta Time)" --> Redis[(Upstash Redis Queue)]
-    Redis -. "8. Trì hoãn cho đến khi hết hạn (ETA)" .-> Worker[ARQ Background Worker]
-    Worker -- "9. Fetch Email Template" --> Template[Jinja2 Engine]
-    Template -- "10. Trigger Sending" --> Resend[Resend SMTP]
-    Resend -- "11. Email Delivered" --> User
+    User((User)) -- "1. Natural language prompt" --> Auth[FastAPI Auth Guard]
+    Auth -- "2. Validate session & rate limit" --> Gateway[FastAPI Router]
+    Gateway -- "3. Prompt + Tool JSON schemas" --> Gemini[Google Gemini API]
+    Gemini -- "4. Return: call_function(action, args)" --> Gateway
+    Gateway -- "5. Translate JSON to SQL query" --> DB[(Supabase PostgreSQL)]
+    DB -- "6. Confirm write" --> Gateway
+    Gateway -- "7. Compute schedule delta time" --> Redis[(Upstash Redis Queue)]
+    Redis -. "8. Delay until ETA" .-> Worker[ARQ Background Worker]
+    Worker -- "9. Fetch Jinja2 template" --> Template[Template Engine]
+    Template -- "10. Trigger SMTP send" --> Resend[Resend API]
+    Resend -- "11. Email delivered" --> User
 ```
 
-### 4. Sơ Đồ Tuần Tự Điều Phối Bulk Mail (Sequence Diagram)
+---
+
+## Authentication & Security Flow
+
 ```mermaid
 sequenceDiagram
     autonumber
-    actor PM as Project Manager
-    participant App as PWA (MacBook/iOS)
-    participant API as FastAPI Backend
-    participant LLM as Gemini API
-    participant DB as Supabase DB
-    participant Mail as Resend SMTP
-
-    PM->>App: Gõ: "Nhắc team nộp báo cáo vòng 1"
-    App->>API: POST /api/v1/agent/chat {text, project_id}
-    API->>API: Xác thực JWT & Kiểm tra Rate Limit (Redis)
-    API->>LLM: Gửi Prompt + tool_definition (send_bulk_mail)
-    activate LLM
-    LLM-->>API: Trả về JSON: call_function(send_bulk_mail, {intent})
-    deactivate LLM
-    API->>DB: Query `project_members` lấy danh sách Email
-    DB-->>API: Trả về [member1@hcmut.edu.vn, tobias@...]
-    API->>API: Compile Jinja2 Template lồng ghép biến {{name}}
-    API->>Mail: HTTP POST /emails (Bulk Dispatch List)
-    Mail-->>API: 200 OK (Queued by Resend)
-    API-->>App: JSON {status: "success", action: "bulk_mail"}
-    App-->>PM: Đổi màu Banner thành Xanh (Success) + Rung máy
-```
-
-### 5. Quy Trình Xác Thực OTP 4 Số & Đồng Bộ Dữ Liệu Tự Động (PWA & Offline Fallback Security Flow)
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as Người dùng PWA
+    actor User as PWA User
     participant Client as Frontend (Auth.jsx)
     participant API as FastAPI Backend (auth.py)
     participant DB as SQLite / Supabase PostgreSQL
     participant Sync as Dynamic Sync Engine
 
-    Note over Sync,DB: Hoạt động đồng bộ khi khởi chạy máy chủ
-    Sync->>DB: Truy vấn dữ liệu từ Supabase PostgreSQL (nếu online)
-    DB-->>Sync: Trả về Users, Settings, Projects, Tasks
-    Sync->>DB: Upsert (merge) toàn bộ dữ liệu vào SQLite local (yourai.db)
+    Note over Sync,DB: Runs on server startup
+    Sync->>DB: Query Supabase PostgreSQL (if online)
+    DB-->>Sync: Return Users, Settings, Projects, Tasks
+    Sync->>DB: Upsert all records into local SQLite (yourai.db)
 
-    Note over User,Client: Luồng Yêu cầu Quên Mật Khẩu (Forgot Password)
-    User->>Client: Nhập email & Gửi yêu cầu
+    Note over User,Client: Forgot Password Flow
+    User->>Client: Enter email and submit request
     Client->>API: POST /forgot-password {email}
-    API->>DB: Kiểm tra trường last_password_reset_at
-    alt Đã đổi mật khẩu trong vòng 3 ngày qua
-        API-->>Client: Báo lỗi 400 (Chặn đổi mật khẩu liên tục)
-        Client-->>User: Hiển thị thông báo chờ còn lại (ngày, giờ, phút)
-    else Hợp lệ (quá 3 ngày hoặc chưa đổi bao giờ)
-        API->>API: Sinh mã OTP 4 số ngẫu nhiên
-        API->>API: Thiết lập thời gian hết hạn của mã là 60 giây
-        API->>DB: Lưu reset_code & reset_code_expires_at
-        API-->>Client: Trả về 200 OK (Mã OTP đã được gửi qua Resend)
-        Client->>Client: Kích hoạt màn hình Reset & khởi chạy Timer 60s thời gian thực
+    API->>DB: Check last_password_reset_at
+    alt Password changed within the last 3 days
+        API-->>Client: 400 Error — cooldown active
+        Client-->>User: Display remaining wait time (days, hours, minutes)
+    else Valid (over 3 days or never reset)
+        API->>API: Generate 4-digit OTP
+        API->>API: Set expiry to 60 seconds
+        API->>DB: Save reset_code & reset_code_expires_at
+        API-->>Client: 200 OK — OTP sent via Resend
+        Client->>Client: Activate reset screen with live 60s countdown
     end
 
-    Note over User,Client: Luồng Đặt lại Mật khẩu & Đếm ngược 60s
-    alt Đếm ngược thời gian thực chạm 0 (Hết 60s)
-        Client->>Client: Báo lỗi hết hạn OTP & tự động chuyển hướng về trang Login
-    else Nhập OTP 4 số & Mật khẩu mới trong vòng 60s
-        User->>Client: Nhập 4 ô vuông OTP + Mật khẩu độ phức tạp cao
+    Note over User,Client: Password Reset Flow
+    alt Countdown reaches 0 (expired)
+        Client->>Client: Show OTP expiry error and redirect to login
+    else User enters OTP and new password within 60 seconds
+        User->>Client: Fill 4-box OTP + new password
         Client->>API: POST /reset-password {email, token, new_password}
-        API->>DB: Xác minh mã & thời hạn (< 60s)
-        API->>API: Kiểm tra độ mạnh mật khẩu (8 ký tự, 1 số, 1 ký tự đặc biệt)
-        API->>DB: Lưu mật khẩu băm, cập nhật last_password_reset_at = UTCNow
-        API-->>Client: Trả về 200 OK (Đặt lại mật khẩu thành công)
-        Client-->>User: Thông báo thành công & tự động chuyển về trang Login
+        API->>DB: Verify code and expiry (< 60s)
+        API->>API: Validate password strength (8 chars, 1 digit, 1 special)
+        API->>DB: Save hashed password, set last_password_reset_at = UTCNow
+        API-->>Client: 200 OK — reset successful
+        Client-->>User: Success toast, redirect to login
     end
 ```
 
-### 6. Vòng Đời Trạng Thái Công Việc (State Machine)
+---
+
+## Workflow Diagrams
+
+### Bulk Mail Sequence (AI-triggered)
+
 ```mermaid
-graph TD
-    Start([Tạo mới - Create Task]) --> TODO[TODO]
-    TODO -->|Bắt đầu làm| IN_PROGRESS[IN PROGRESS]
-    IN_PROGRESS -->|Tạm nghỉ| TODO
-    IN_PROGRESS -->|Gặp vướng mắc| BLOCKED[BLOCKED]
-    BLOCKED -->|Giải quyết xong| IN_PROGRESS
-    IN_PROGRESS -->|Xác nhận hoàn thành| DONE[DONE]
-    DONE -->|Mở lại| TODO
-    
-    TODO -->|Xóa/Hủy| ARCHIVED[ARCHIVED]
-    IN_PROGRESS -->|Hủy| ARCHIVED
-    BLOCKED -->|Hủy| ARCHIVED
-    DONE -->|Đóng dự án| ARCHIVED
-    ARCHIVED --> End([Kết thúc])
-    
+sequenceDiagram
+    autonumber
+    actor PM as Project Manager
+    participant App as PWA (MacBook / iOS)
+    participant API as FastAPI Backend
+    participant LLM as Gemini API
+    participant DB as Supabase DB
+    participant Mail as Resend SMTP
+
+    PM->>App: Type: "Remind the team to submit round 1 report"
+    App->>API: POST /api/v1/agent/chat {text, project_id}
+    API->>API: Validate JWT & check rate limit (Redis)
+    API->>LLM: Send prompt + tool definition (send_bulk_mail)
+    activate LLM
+    LLM-->>API: Return JSON: call_function(send_bulk_mail, {intent})
+    deactivate LLM
+    API->>DB: Query project_members for email list
+    DB-->>API: Return [member1@email.com, member2@email.com, ...]
+    API->>API: Compile Jinja2 template with {{name}} variables
+    API->>Mail: HTTP POST /emails (bulk dispatch)
+    Mail-->>API: 200 OK (queued by Resend)
+    API-->>App: JSON {status: "success", action: "bulk_mail"}
+    App-->>PM: Success banner + haptic feedback
 ```
 
+### Automated Scheduling & Email Dispatch (BPMN)
 
-### 7. Lên Lịch Tự Động & Bắn Mail (BPMN Workflow)
 ```mermaid
 graph TD
-    subgraph Lane_1 ["Lane 1: Project Manager (Người Dùng)"]
-        Start((Bắt đầu)) --> Assign[Điền Form Giao Việc & Email]
-        Assign --> Toggle[Bật công tắc 'Automation Email']
-        Toggle --> Submit[Bấm Xác Nhận]
+    subgraph Lane_1 ["Lane 1: Project Manager"]
+        Start((Start)) --> Assign[Fill task assignment form + email]
+        Assign --> Toggle[Enable 'Automation Email' toggle]
+        Toggle --> Submit[Confirm and submit]
     end
     subgraph Lane_2 ["Lane 2: Core Engine (FastAPI & DB)"]
-        Submit --> AuthCheck{JWT Hợp lệ?}
-        AuthCheck -->|No| Reject[Báo lỗi 401]
-        AuthCheck -->|Yes| SaveDB[Lưu Task vào Database]
-        SaveDB --> SaveStatus[Lưu Member Status = Pending]
-        SaveStatus --> CalcTime[Tính thời điểm trừ lùi 24h]
-        CalcTime --> SetTimer((Đẩy Job vào Redis))
+        Submit --> AuthCheck{JWT valid?}
+        AuthCheck -->|No| Reject[Return 401 Unauthorized]
+        AuthCheck -->|Yes| SaveDB[Save task to database]
+        SaveDB --> SaveStatus[Set member status = pending]
+        SaveStatus --> CalcTime[Calculate ETA minus 24 hours]
+        CalcTime --> SetTimer((Enqueue job to Redis))
     end
-    subgraph Lane_3 ["Lane 3: Background Worker & External"]
-        SetTimer -. Chờ đến ETA .-> PopJob[Worker Kéo Job Ra]
-        PopJob --> Render[Render Jinja2 HTML Template]
-        Render --> CallAPI[Gọi Resend HTTP API]
-        CallAPI --> SMTP[Resend Server xử lý DKIM/SPF]
-        SMTP --> End((Thành viên nhận Mail))
+    subgraph Lane_3 ["Lane 3: Background Worker & External Services"]
+        SetTimer -. Wait until ETA .-> PopJob[Worker dequeues job]
+        PopJob --> Render[Render Jinja2 HTML template]
+        Render --> CallAPI[Call Resend HTTP API]
+        CallAPI --> SMTP[Resend processes DKIM / SPF]
+        SMTP --> End((Member receives email))
     end
+```
+
+### Task Lifecycle (State Machine)
+
+```mermaid
+graph TD
+    Start([Create Task]) --> TODO[TODO]
+    TODO -->|Begin work| IN_PROGRESS[IN PROGRESS]
+    IN_PROGRESS -->|Pause| TODO
+    IN_PROGRESS -->|Blocked| BLOCKED[BLOCKED]
+    BLOCKED -->|Resolved| IN_PROGRESS
+    IN_PROGRESS -->|Confirm complete| DONE[DONE]
+    DONE -->|Reopen| TODO
+    TODO -->|Cancel| ARCHIVED[ARCHIVED]
+    IN_PROGRESS -->|Cancel| ARCHIVED
+    BLOCKED -->|Cancel| ARCHIVED
+    DONE -->|Close project| ARCHIVED
+    ARCHIVED --> End([End])
 ```
 
 ---
 
-## 🛠️ Bộ Tech Stack Tối Ưu Chi Phí Doanh Nghiệp (Zero-Cost Stack)
+## Tech Stack
 
-- **Cloudflare CDN & WAF**: Proxy ẩn IP, chống DDoS, tối ưu Edge caching tài nguyên tĩnh.
-- **FastAPI (Lõi Asyncpg + SQLAlchemy)**: High-performance async gateway, tự động sinh tài liệu Swagger OpenAPI chuyên nghiệp.
-- **Supabase Auth & PostgreSQL + RLS**: Hệ thống nhận dạng người dùng mạnh mẽ kết hợp cô lập dữ liệu cấp độ DB lõi (Row Level Security).
-- **Upstash Redis (Rate Limiter & ARQ)**: Giới hạn tần suất và quản lý hàng đợi công việc bất đồng bộ (3-strike exponential backoff retry).
-- **Service Worker PWA & Web Push (VAPID)**: Kích hoạt ứng dụng ngoại tuyến (Offline) và gửi thông báo trực tiếp trên iOS/macOS không cần SDK nặng nề.
-- **Google Gemini API**: Trí tuệ nhân tạo nhận dạng hàm (Function Calling) và trích xuất cấu trúc dữ liệu tiếng Việt.
+| Layer | Technology | Purpose |
+|---|---|---|
+| **Frontend** | React 19 + Vite 8 | Component-based PWA UI |
+| **Routing & State** | React Hooks (no external router) | Lightweight SPA state management |
+| **Calendar** | FullCalendar 6 | Interactive scheduling views |
+| **Icons** | lucide-react | Consistent SVG icon set |
+| **Image Editing** | react-easy-crop | Round avatar cropping |
+| **HTTP Client** | Axios | API communication with cookie support |
+| **Backend** | FastAPI + Uvicorn | High-performance async REST API |
+| **ORM** | SQLAlchemy 2.0 (asyncpg) | Async database access |
+| **Primary Database** | Supabase PostgreSQL (RLS) | Production data store with row-level security |
+| **Local Database** | SQLite (aiosqlite) | Development fallback + offline sync |
+| **Auth** | python-jose + bcrypt | JWT signing and password hashing |
+| **AI** | Google Gemini 1.5 Flash | Natural language function calling |
+| **Background Jobs** | ARQ + Upstash Redis | Async task queue with exponential-backoff retry |
+| **Email** | Resend SMTP + Jinja2 | Transactional and bulk HTML emails |
+| **Push Notifications** | pywebpush (VAPID) | Native web push on iOS/macOS |
+| **Rate Limiting** | Token bucket (Redis / in-memory) | Per-route abuse protection |
+| **CDN / WAF** | Cloudflare | DDoS protection, edge caching, SSL |
+| **PWA** | Service Worker + Web App Manifest | Offline support, homescreen install |
 
 ---
 
-## 📂 Cấu Trúc Dự Án (Enterprise Monorepo Directory)
+## Project Structure
 
-```text
-├── backend-engine/                 # Lõi FastAPI + ARQ Worker
+```
+YourAI/
+├── backend-engine/                  # FastAPI application
 │   ├── app/
-│   │   ├── api/                    # Tầng REST API Routers
-│   │   │   ├── dependencies/       # get_db(), get_current_user()
-│   │   │   └── v1/                 # Các routers chức năng v1
-│   │   ├── core/                   # Cấu hình hệ thống, rate limiter
-│   │   ├── db/                     # asyncpg engine, ORM models
-│   │   ├── schemas/                # Validate Pydantic Schemas
-│   │   ├── services/               # Lõi GPA math, Gemini AI, Resend SMTP
-│   │   └── worker/                 # ARQ background workers & jobs
-│   ├── templates/                  # Thư mục chứa mẫu email sang trọng
-│   ├── requirements.txt            # Quản lý thư viện Python
-│   └── main.py                     # Khởi chạy ứng dụng
+│   │   ├── api/
+│   │   │   ├── dependencies/        # Auth dependency injection (get_current_user)
+│   │   │   └── v1/                  # REST API routers
+│   │   │       ├── auth.py          # Register, login, profile, OTP password reset
+│   │   │       ├── tasks.py         # Task CRUD
+│   │   │       ├── projects.py      # Project + member management, bulk mail
+│   │   │       ├── gpa.py           # GPA hierarchy CRUD + score calculation
+│   │   │       └── agent.py         # AI chat endpoint (Gemini function calling)
+│   │   ├── core/
+│   │   │   ├── config.py            # Pydantic settings from .env
+│   │   │   ├── security.py          # JWT helpers
+│   │   │   └── rate_limit.py        # Token-bucket rate limiter
+│   │   ├── db/
+│   │   │   ├── models.py            # SQLAlchemy ORM models
+│   │   │   └── session.py           # Async engine, session factory, get_db()
+│   │   ├── schemas/
+│   │   │   └── schemas.py           # Pydantic request/response schemas
+│   │   ├── services/
+│   │   │   ├── gpa_math.py          # GPA computation (VN ↔ AU conversion)
+│   │   │   ├── llm_parser.py        # Gemini function calling + heuristic fallback
+│   │   │   ├── mail_service.py      # Jinja2 rendering + Resend SMTP dispatch
+│   │   │   └── sync_service.py      # Bidirectional SQLite ↔ Postgres sync
+│   │   └── worker/
+│   │       ├── main.py              # ARQ WorkerSettings
+│   │       ├── tasks.py             # Email + push tasks with retry/backoff
+│   │       └── trigger.py           # Job enqueuing with local-async fallback
+│   ├── templates/
+│   │   ├── bulk_mail.html           # Luxury gold/black email template
+│   │   └── custom_remind.html       # Custom HTML reminder shell template
+│   ├── .env.example                 # Environment variable reference
+│   ├── requirements.txt
+│   └── main.py                      # App factory, router registration, startup
 │
-├── frontend-pwa/                   # PWA React App
-│   ├── public/                     # manifest.json, service-worker.js, logo.png
-│   ├── src/                        # Core network, App.jsx, index.css
-│   └── vite.config.js              # Cấu hình Vite bundler
+└── frontend-pwa/                    # React PWA application
+    ├── public/
+    │   ├── manifest.json            # PWA manifest (standalone, icons)
+    │   ├── service-worker.js        # Cache-first offline shell + VAPID push
+    │   └── logo.png
+    ├── src/
+    │   ├── core/
+    │   │   └── network.js           # Axios instance (auth interceptors)
+    │   ├── components/
+    │   │   ├── Auth.jsx             # Login, register, OTP reset UI
+    │   │   ├── Sidebar.jsx          # Collapsible navigation
+    │   │   ├── Dashboard.jsx        # Analytics, clock, charts
+    │   │   ├── AiExecutiveAgent.jsx # AI chat terminal + email/task consoles
+    │   │   ├── Scheduler.jsx        # FullCalendar with drag/drop
+    │   │   ├── Projects.jsx         # Project management + Gantt chart
+    │   │   ├── GpaIntelligence.jsx  # GPA tracker (VN/AU dual scale)
+    │   │   └── Settings.jsx         # Profile editor + avatar crop
+    │   ├── App.jsx                  # Root state container, routing logic
+    │   └── main.jsx                 # React root render
+    ├── index.html
+    ├── vite.config.js
+    └── package.json
 ```
 
 ---
 
-## 🚀 Hướng Dẫn Chạy Cài Đặt & Vận Hành (Quickstart)
+## Getting Started
 
-### 1. Khởi Chạy Backend (FastAPI Engine)
-Di chuyển vào thư mục backend và cài đặt thư viện cần thiết:
+### Prerequisites
+
+- Python 3.11+
+- Node.js 20+
+- A Supabase project (or use the bundled SQLite for local development)
+- A Google AI Studio API key (for the Gemini agent)
+- A Resend account (for email functionality)
+
+### 1. Backend Setup
+
 ```bash
 cd backend-engine
-pip install -r requirements.txt
-```
 
-Cấu hình các API Key và kết nối cơ sở dữ liệu trong file `.env` (Mặc định đã được thiết lập chạy SQLite local cực nhanh để kiểm thử):
-```bash
-# Chạy server Uvicorn local
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment variables
+cp .env.example .env
+# Edit .env with your API keys (see Environment Variables section)
+
+# Start the server
 python main.py
 ```
-*Tru cập Swagger API docs tại:* `http://localhost:8000/docs`
 
-### 2. Khởi Chạy Frontend (PWA App)
-Di chuyển vào thư mục frontend và cài đặt dependencies:
+The API will be available at `http://localhost:8000`.
+Interactive API documentation is available at `http://localhost:8000/docs`.
+
+> **Note:** The server falls back to a local SQLite database (`yourai.db`) automatically if the Supabase connection is unavailable, making it fully functional for local development with no external dependencies.
+
+### 2. Frontend Setup
+
 ```bash
 cd frontend-pwa
+
+# Install dependencies
 npm install
+
+# Start the development server
 npm run dev
 ```
-*Truy cập bảng điều khiển giao diện tại:* `http://localhost:5173`
+
+The application will be available at `http://localhost:5173`.
+
+### 3. Background Worker (Optional — required for scheduled emails)
+
+```bash
+cd backend-engine
+source venv/bin/activate
+
+# Run the ARQ worker
+python -m arq app.worker.main.WorkerSettings
+```
+
+> **Note:** Email sending also works without a running worker — the trigger falls back to an asyncio task in the main server process when Redis is unavailable.
 
 ---
 
-## 🎨 Hệ Thống Thiết Kế Luxury UI/UX Design System
-- **Accents Vàng Kim**: `#D4AF37` (Classic Gold) đem lại vẻ lịch lãm và quý phái.
-- **Nghệ Thuật Chữ**: Sự kết hợp giữa `Playfair Display` cổ điển quyền lực và `Montserrat` tối giản hiện đại.
-- **Surface**: Alabaster White (`#FAF9F6`) dịu mắt phối hợp hiệu ứng mờ nhòe kính cường lực (**Glassmorphism**) đem lại chiều sâu vô song cho giao diện.
+## Environment Variables
+
+Copy `backend-engine/.env.example` to `backend-engine/.env` and fill in the values:
+
+```env
+# Application
+APP_ENV=development          # development | production
+SECRET_KEY=your-secret-key   # JWT signing key
+
+# Database (leave blank to use local SQLite)
+DATABASE_URL=postgresql://user:password@host:port/dbname
+
+# Redis (leave blank to use in-memory rate limiting and local job dispatch)
+REDIS_URL=redis://localhost:6379
+
+# Google Gemini AI
+GEMINI_API_KEY=your-gemini-api-key
+
+# Resend SMTP (leave blank to enable mock/print mode)
+RESEND_API_KEY=your-resend-api-key
+RESEND_FROM_EMAIL=noreply@yourdomain.com
+
+# VAPID Web Push (optional)
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+VAPID_SUBJECT=mailto:admin@yourdomain.com
+
+# Supabase (optional — for Postgres sync)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-service-role-key
+```
 
 ---
 
-## 🔒 Cô Lập Dữ Liệu Đa Tài Khoản & Khởi Tạo Trạng Thái Về 0 (Zero-State Workspace)
+## Design System
 
-Để đáp ứng tiêu chuẩn kiến trúc Enterprise-grade, hệ thống đảm bảo cô lập dữ liệu 100% giữa các người dùng:
-1. **Database Level Isolation**: Tất cả các truy vấn thông tin công việc (`TASKS`), dự án (`PROJECTS`), cấu hình giao diện (`USER_SETTINGS`), và học tập (`GPA_YEARS`, `GPA_TERMS`, `GPA_SUBJECTS`, `GPA_COMPONENTS`) trên backend đều được lọc nghiêm ngặt qua khóa ngoại `user_id == current_user.id`. Đảm bảo người dùng này tuyệt đối không thể xem hay sửa đổi dữ liệu của người dùng khác.
-2. **Zero-State Workspace**: Trạng thái mặc định ban đầu của Dashboard khi người dùng mới đăng ký hoàn toàn trống rỗng (`0 tasks`, `0 projects`, `0 subjects`). Giúp người dùng có toàn quyền thiết lập và cá nhân hóa lộ trình của riêng mình mà không bị chồng lấn hay ảnh hưởng bởi các giá trị mock cũ.
+The application uses a custom Luxury Design System built around three core principles:
+
+| Token | Value | Usage |
+|---|---|---|
+| **Gold Accent** | `#D4AF37` (Classic Gold) | Primary buttons, rings, highlights |
+| **Surface** | `#FAF9F6` (Alabaster White) | Page backgrounds, card surfaces |
+| **Dark** | `#1A1A1A` (Obsidian) | Auth panel, sidebar, dark elements |
+| **Heading Font** | `Playfair Display` | Page titles, section headers |
+| **Body Font** | `Montserrat` | All UI text, labels, inputs |
+| **Glassmorphism** | `backdrop-filter: blur(20px)` | Cards, modals, overlays |
+| **Border Radius** | 12px (user-configurable) | All interactive elements |
 
 ---
 
-## 📸 Minh Chứng Thực Nghiệm & Visual Test Suite
+## Security & Data Isolation
 
-Dưới đây là hình ảnh thực tế ghi lại từ Suite Kiểm thử Trình duyệt Tự động (Browser Subagent) về giao diện đăng nhập split-screen thương lưu và thông báo trạng thái:
+### User Data Isolation
 
-### 1. Giao Diện Đăng Nhập Luxury Split-Screen Welcome Page
-Sử dụng thiết kế chia đôi màn hình tối giản thanh lịch: Cột trái Obsidian-Dark mang biểu trưng logo thương hiệu YourAI ở tâm dọc và châm ngôn *"Elegance in Productivity"* vàng gold; Cột phải Pure-White với ô nhập liệu dạng kẻ chân thanh mảnh, tính năng **Remember me** tự động lưu trữ thông tin đăng nhập bảo mật trong localStorage, và nút bấm *"ENTER WORKSPACE"* sang trọng:
+All database queries for tasks, projects, GPA data, and user settings are strictly filtered by `user_id = current_user.id` at the backend service layer. It is architecturally impossible for one authenticated user to read or modify another user's data.
 
-![Luxury Split-Screen Welcome Page](./artifacts/logo_auth_remember_me.png)
+### Authentication Security
 
-### 2. Thông Báo Đăng Xuất Thành Công (Secure Logout Redirect)
-Khi người dùng bấm nút "Đăng xuất" ở góc trái sidebar, phiên làm việc sẽ bị chấm dứt ngay lập tức trên cookies bảo mật, đưa người dùng trở lại màn hình đăng nhập kèm thông báo Toast Gold-Black *"Đăng xuất thành công!"*:
+- Passwords are hashed with **bcrypt** before storage.
+- Sessions use **JWT tokens** stored in **HttpOnly cookies**, preventing JavaScript access.
+- Password reset uses a **4-digit OTP** valid for **60 seconds only**.
+- A **3-day cooldown** between password resets prevents abuse.
+- Passwords must be at least **8 characters** and include at least one digit and one special character.
+- Legacy or plaintext passwords are **automatically upgraded to bcrypt** on the next successful login.
 
-![Secure Logout Redirect](./artifacts/final_auth_success.png)
+### Rate Limiting
+
+| Route Category | Limit |
+|---|---|
+| Public endpoints | 5 requests / minute |
+| AI agent chat | 20 requests / 10 minutes |
+| Bulk mail dispatch | 1 request / 30 minutes |
+
+---
+
+## Screenshots
+
+### Luxury Split-Screen Login
+
+A split-screen design: an Obsidian-dark left panel with the YourAI logo and the tagline *"Elegance in Productivity"*, paired with a clean white right panel featuring underline-style inputs and a gold *"ENTER WORKSPACE"* button. Includes a secure **Remember Me** feature backed by localStorage.
+
+![Luxury Split-Screen Login](./artifacts/logo_auth_remember_me.png)
+
+### Secure Logout Confirmation
+
+When the user signs out, the session is immediately invalidated and the user is redirected to the login screen with a gold-black toast notification confirming the logout.
+
+![Secure Logout Redirect](./artifacts/auth_testing_result.png)
+
+---
+
+## License
+
+This project is licensed under the MIT License.
